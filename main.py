@@ -2,30 +2,71 @@ import pandas as pd
 import os
 import numpy as np
 import re
-
-file_path = "."
-file_name = "smsCount.csv"
-
-file_ = os.path.join(file_path, file_name)
+import datetime
 
 
-def count_it(sms_content):
-    all_punctuation = r"""!"#$%&'()*+,./:;<=>?@[\]^_`{|}~"""
-    return "".join(re.findall(rf'[^a-zA-Z\s0-9\{all_punctuation}]+', sms_content)).__len__()
+class Count:
+    """Get sms counts within the e-appointment database"""
+
+    def __init__(self, filepath, name):
+        self.start_time = datetime.datetime.now()
+        self.file_path = filepath
+        self.name = name
+        self.character_count = None
+        self.sms_mean = None
+        self._all_punctuation = r"""!"#$%&'()*+,./:;<=>?@[\]^_`{|}~"""
+        self.end_time = None
+
+    @property
+    def filename(self):
+        return os.path.join(self.file_path, self.name)
+
+    @filename.setter
+    def filename(self, val):
+        import os
+        if os.path.exists(val):
+            return val
+        else:
+            assert "Enter a valid file"
+
+    @property
+    def regexp(self):
+        return self._all_punctuation
+
+    @regexp.setter
+    def regexp(self, value):
+        self._all_punctuation = value
+
+    def count_it(self, sms_content):
+        return "".join(re.findall(rf'[^a-zA-Z\s0-9\{self._all_punctuation}]+', sms_content)).__len__()
+
+    def read_data(self):
+        return pd.read_csv(self.filename, sep=',')
+
+    def get_stats(self):
+        dataframe = self.read_data()
+        dataframe['character_count'] = (
+                dataframe.content.apply(self.count_it) * 2
+                + dataframe.content.str.len()
+                - dataframe.content.apply(self.count_it))
+        dataframe['sms_count'] = np.ceil(dataframe.character_count / 70)
+
+        (self.character_count, self.sms_mean) = (dataframe.sms_count.sum(), dataframe.sms_count.mean())
+        self.end_time = datetime.datetime.now()
+
+    def __str__(self):
+        if self.character_count is None:
+            assert 'Get stats module must be initiated first.'
+        return f'total_count:{self.character_count}, sms_mean:{self.sms_mean}'
+
+    def get_run_time(self):
+        return str(self.end_time - self.start_time)
 
 
-df = pd.read_csv(file_, sep=',')
-df['character_count'] = df.content.str.len()
-df['character_count_2'] = (df.content.apply(count_it) * 2 + df.content.str.len() - df.content.apply(count_it))
-df['sms_count'] = np.ceil(df.character_count / 70)
-df['sms_count_2'] = np.ceil((df.content.apply(count_it) * 2 + df.content.str.len() - df.content.apply(count_it)) / 70)
-
-test_data = count_it(df.content[1]) * 2 + df.content[1].__len__() - count_it(df.content[1])
-
-total_count = df.sms_count.sum()
-total_count_2 = df.sms_count_2.sum()
-sms_mean = df.sms_count.mean()
-sms_mean_2 = df.sms_count_2.mean()
-print(f'total_count:{total_count}, sms_mean:{sms_mean}')
-print(f'total_count:{total_count_2}, sms_mean:{sms_mean_2}')
-pass
+if __name__ == '__main__':
+    file_path = "."
+    file_name = "smsCount.csv"
+    count = Count(file_path, file_name)
+    count.get_stats()
+    print(count.get_run_time())
+    print(count)
