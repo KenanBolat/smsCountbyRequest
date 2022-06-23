@@ -7,14 +7,18 @@ file_path = "."
 file_name = "smsCount.csv"
 
 file_ = os.path.join(file_path, file_name)
+
+
 def count_it(sms_content):
     all_punctuation = r"""!"#$%&'()*+,./:;<=>?@[\]^_`{|}~"""
     return "".join(re.findall(rf'[^a-zA-Z\s0-9\{all_punctuation}]+', sms_content)).__len__()
 
+
 df = pd.read_csv(file_, sep=',')
 df['character_count'] = df.content.str.len()
+df['character_count_2'] = (df.content.apply(count_it) * 2 + df.content.str.len() - df.content.apply(count_it))
 df['sms_count'] = np.ceil(df.character_count / 70)
-df['sms_count_2'] = np.ceil((df.content.apply(count_it)*2  + df.content.str.len() - df.content.apply(count_it)) / 70)
+df['sms_count_2'] = np.ceil((df.content.apply(count_it) * 2 + df.content.str.len() - df.content.apply(count_it)) / 70)
 
 test_data = count_it(df.content[1]) * 2 + df.content[1].__len__() - count_it(df.content[1])
 
