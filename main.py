@@ -16,6 +16,7 @@ class Count:
         self.sms_mean = None
         self._all_punctuation = r"""!"#$%&'()*+,./:;<=>?@[\]^_`{|}~"""
         self.end_time = None
+        self.row_count = None
 
     @property
     def filename(self):
@@ -45,6 +46,7 @@ class Count:
 
     def get_stats(self):
         dataframe = self.read_data()
+        self.row_count = dataframe.shape[0]
         dataframe['character_count'] = (
                 dataframe.content.apply(self.count_it) * 2
                 + dataframe.content.str.len()
@@ -57,7 +59,7 @@ class Count:
     def __str__(self):
         if self.character_count is None:
             assert 'Get stats module must be initiated first.'
-        return f'total_count:{self.character_count}, sms_mean:{self.sms_mean}'
+        return f'Row Count: {self.row_count}, Total Count:{self.character_count}, SMS Mean:{self.sms_mean}'
 
     def get_run_time(self):
         return str(self.end_time - self.start_time)
@@ -65,7 +67,7 @@ class Count:
 
 if __name__ == '__main__':
     file_path = "."
-    file_name = "smsCount.csv"
+    file_name = r"smsCount_July.csv"
     count = Count(file_path, file_name)
     count.get_stats()
     print(count.get_run_time())
